@@ -1,0 +1,8 @@
+echo "setting up shutdown"
+sudo python /home/pi/shutdown.py&
+echo "setting IP address"
+sudo ifconfig eth0 10.1.1.2 netmask 255.255.255.0
+echo "running pd"
+pd -nogui "/home/pi/Dannok Singing Plants/osc11.pd" 2> /dev/null&
+echo "running sensor reading"
+sudo python /home/pi/singingplant_2.py&
