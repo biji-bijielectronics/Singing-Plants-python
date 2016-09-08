@@ -39,7 +39,7 @@ init(cap1)
 pd = PdConnection('localhost', 3000)
 logFile = open('singing_plants.log', 'a')
 
-pins = [4,5,6,7]
+pins = [0,2,4,5]
 ccount = 0
 avg = 0
 buffer = [0, 0, 0, 0]
