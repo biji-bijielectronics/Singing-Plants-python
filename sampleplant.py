@@ -1,7 +1,11 @@
 import time
 from MovingAvg import MovingAvg
-from PdConnection import PdConnection      
 import Adafruit_MPR121.MPR121 as MPR121
+import time
+import pygame
+import sys
+
+last_reset = time.time()
 
 def init(cap):
     # Soft reset of device.
@@ -28,6 +32,8 @@ def init(cap):
     cap1._i2c_retry(cap1._device.write8, MPR121.MPR121_AUTOCONFIG0, 0b10101110)
     cap1._i2c_retry(cap1._device.write8, MPR121.MPR121_AUTOCONFIG1, 0)
 
+    last_reset = time.time()
+
 # Create MPR121 instance
 cap1 = MPR121.MPR121()
 
@@ -35,9 +41,7 @@ cap1 = MPR121.MPR121()
 cap1.begin( 0x5a )
 init(cap1)
 
-# Create connection to PD and open a log file
-pd = PdConnection('localhost', 3000)
-logFile = open('singing_plants.log', 'a')
+#logFile = open('singing_plants.log', 'a')
 
 pins = [0,2,4,5]
 ccount = 0
@@ -49,6 +53,43 @@ mavg = [MovingAvg(bs), MovingAvg(bs), MovingAvg(bs), MovingAvg(bs)]
 
 cap1.touched()
 
+pygame.mixer.pre_init(44100, -16, 12, 512)
+pygame.init()
+
+SOUND_MAPPING = {
+  3: ['/opt/sonic-pi/etc/samples/loop_amen.wav',0.7,True],
+  1: ['/opt/sonic-pi/etc/samples/ambi_drone.wav',1,True],
+  2: ['/opt/sonic-pi/etc/samples/bass_voxy_c.wav',0.5,True],
+  0: ['/opt/sonic-pi/etc/samples/ambi_piano.wav',1,False]
+}
+
+sounds = [0,0,0,0]
+is_loop = [False,False,False,False]
+
+for key,data in SOUND_MAPPING.iteritems():
+        soundfile, volume, loop = data
+        sounds[key] =  pygame.mixer.Sound(soundfile)
+        sounds[key].set_volume(volume);
+        is_loop[key] = loop
+
+sounds_playing = [False,False,False,False]
+print is_loop
+
+
+
+def playSound(sound_id):
+    if is_loop[sound_id]:
+        if not sounds_playing[sound_id]:
+            sounds[sound_id].play(loops = -1)
+            sounds_playing[i] = True
+    else:
+        sounds[sound_id].play()
+        sounds_playing[i] = True
+
+def stopSound(sound_id):
+    sounds[i].stop()
+    sounds_playing[i] = False
+    
 # Start loop
 while True:
 
@@ -60,10 +101,14 @@ while True:
         
         for i in range(4):
             mavg[i].reset()
-            try:
-                pd.sendValue('pin' + str(i), 0)
-            except Exception as e:
-                logFile.write('\n' + str(e))
+            #stop sounds
+            stopSound(i)
+            # try:
+            #     # play sound
+
+            #     #pd.sendValue('pin' + str(i), 0)
+            # except Exception as e:
+            #     logFile.write('\n' + str(e))
     
     # Send values if touching
     elif tcd > 0:
@@ -74,50 +119,28 @@ while True:
         # Print the differences
         print 'Diff:\t', '\t'.join(map(str, diff1))
         
-        # Raw values
-        '''            
-        for i in range(4):
-            try:
-                pd.sendValue('pin' + str(i), diff1[i])
-            except Exception as e:
-                print str(e)
-                logFile.write('\n' + str(e))
-        '''   
-
-        # Average every 10 readings
-        '''
-        if ccount == 10:
-            ccount = 0
-            for i in range(4):
-                try:
-                    pd.sendValue('pin' + str(i), buffer[i]/10)
-                    buffer[i] = 0
-                except Exception as e:
-                    print str(e)
-                    logFile.write('\n' + str(e))
-        else:
-	    for i in range(4):
-                buffer[i] += diff1[i]
-	
-        ccount += 1
-        '''
     
         # Moving average
         for i in range(4):
             mavg[i].add(diff1[i])
-            avg = mavg[i].get() * 9
+            avg = mavg[i].get()
             # print 'Avg' + str(i), ':\t', avg
             try:
-                pd.sendValue('pin' + str(i), avg  if cap1.is_touched(pins[i]) else 0)
+                #pd.sendValue('pin' + str(i), avg if cap1.is_touched(pins[i]) else 0)
+                if cap1.is_touched(pins[i]):
+                    playSound(i)
+                else:
+                    stopSound(i)
+
             except Exception as e:
                 print str(e)
                 logFile.write('\n' + str(e))
 
     # Reset every minute
-    if ccount >= 600:
-        ccount = 0
+    if time.time() - last_reset > 60:
         init(cap1)
         print 'Reinitializing the sensor'
+        last_reset = time.time()
     
     # Save previous state
     pState = tcd
@@ -126,4 +149,4 @@ while True:
     time.sleep(0.1)
 
     # Increase cycle counter
-    ccount += 1
+    #ccount += 1

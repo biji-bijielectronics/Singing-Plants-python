@@ -5,7 +5,7 @@ import pyttsx
 
 def shutdown(channel):
     logfile = open('singing_plants.log', 'a')
-    logfile.write(str(time.time()) + " shutting down")
+    logfile.write(str(time.time()) + " shutting down\n")
     logfile.close()
     engine = pyttsx.init()
     engine.say('System Offline')

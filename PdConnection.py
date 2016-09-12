@@ -23,6 +23,7 @@ class PdConnection:
 
     def sendValue(self, name, value):
         message = name + " " + str(value) + ";"
+        #print message
         try:
             self.__socket.send(message)
         except socket.timeout:

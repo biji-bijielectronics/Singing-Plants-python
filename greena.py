@@ -1,7 +1,10 @@
 import time
 from MovingAvg import MovingAvg
-from PdConnection import PdConnection      
 import Adafruit_MPR121.MPR121 as MPR121
+import time
+import pygame
+import sys
+
 
 def init(cap):
     # Soft reset of device.
@@ -35,9 +38,7 @@ cap1 = MPR121.MPR121()
 cap1.begin( 0x5a )
 init(cap1)
 
-# Create connection to PD and open a log file
-pd = PdConnection('localhost', 3000)
-logFile = open('singing_plants.log', 'a')
+#logFile = open('singing_plants.log', 'a')
 
 pins = [0,2,4,5]
 ccount = 0
@@ -48,6 +49,23 @@ bs = 5
 mavg = [MovingAvg(bs), MovingAvg(bs), MovingAvg(bs), MovingAvg(bs)]
 
 cap1.touched()
+
+pygame.mixer.pre_init(44100, -16, 12, 512)
+pygame.init()
+
+SOUND_MAPPING = {
+  0: '/home/pi/Singing-Plants-python/samples/huelamp.ogg',
+  1: '/home/pi/Singing-Plants-python/samples/shiva.ogg',
+  2: '/home/pi/Singing-Plants-python/samples/jasur.ogg',
+  3: '/home/pi/Singing-Plants-python/samples/faisal.ogg'
+}
+
+sounds = [0,0,0,0]
+
+for key,soundfile in SOUND_MAPPING.iteritems():
+        sounds[key] =  pygame.mixer.Sound(soundfile)
+        sounds[key].set_volume(1);
+
 
 # Start loop
 while True:
@@ -60,10 +78,12 @@ while True:
         
         for i in range(4):
             mavg[i].reset()
-            try:
-                pd.sendValue('pin' + str(i), 0)
-            except Exception as e:
-                logFile.write('\n' + str(e))
+            # try:
+            #     # play sound
+
+            #     #pd.sendValue('pin' + str(i), 0)
+            # except Exception as e:
+            #     logFile.write('\n' + str(e))
     
     # Send values if touching
     elif tcd > 0:
@@ -74,47 +94,23 @@ while True:
         # Print the differences
         print 'Diff:\t', '\t'.join(map(str, diff1))
         
-        # Raw values
-        '''            
-        for i in range(4):
-            try:
-                pd.sendValue('pin' + str(i), diff1[i])
-            except Exception as e:
-                print str(e)
-                logFile.write('\n' + str(e))
-        '''   
-
-        # Average every 10 readings
-        '''
-        if ccount == 10:
-            ccount = 0
-            for i in range(4):
-                try:
-                    pd.sendValue('pin' + str(i), buffer[i]/10)
-                    buffer[i] = 0
-                except Exception as e:
-                    print str(e)
-                    logFile.write('\n' + str(e))
-        else:
-	    for i in range(4):
-                buffer[i] += diff1[i]
-	
-        ccount += 1
-        '''
     
         # Moving average
         for i in range(4):
             mavg[i].add(diff1[i])
-            avg = mavg[i].get() * 9
+            avg = mavg[i].get()
             # print 'Avg' + str(i), ':\t', avg
             try:
-                pd.sendValue('pin' + str(i), avg  if cap1.is_touched(pins[i]) else 0)
+                #pd.sendValue('pin' + str(i), avg if cap1.is_touched(pins[i]) else 0)
+                if cap1.is_touched(pins[i]):
+                    sounds[i].play()
+
             except Exception as e:
                 print str(e)
                 logFile.write('\n' + str(e))
 
     # Reset every minute
-    if ccount >= 600:
+    if ccount >= 1200:
         ccount = 0
         init(cap1)
         print 'Reinitializing the sensor'
@@ -123,7 +119,7 @@ while True:
     pState = tcd
 
     # Short pause before repeating loop
-    time.sleep(0.1)
+    time.sleep(0.05)
 
     # Increase cycle counter
     ccount += 1
