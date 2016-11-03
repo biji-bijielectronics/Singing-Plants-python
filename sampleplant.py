@@ -60,7 +60,7 @@ SOUND_MAPPING = {
   3: ['samples/loop_amen.wav',0.7,True],
   1: ['samples/ambi_drone.wav',1,True],
   2: ['samples/bass_voxy_c.wav',0.5,True],
-  0: ['samples/hello.ogg',1,True]
+  0: ['samples/ppap.wav',0.5,True]
 }
 
 sounds = [0,0,0,0]

@@ -1,4 +1,5 @@
 echo "setting up shutdown"
+cd /home/pi/Singing-Plants-python
 sudo python /home/pi/Singing-Plants-python/shutdown.py&
 #echo "setting IP address"
 #sudo ifconfig eth0 10.1.1.2 netmask 255.255.255.0
@@ -7,4 +8,4 @@ echo "running pd"
 echo "running sensor reading"
 #sudo python /home/pi/Singing-Plants-python/singingplant_2.py&
 sudo python /home/pi/Singing-Plants-python/sampleplant.py&
-espeak "System online"
+flite -t "System online"

@@ -1,16 +1,14 @@
 import os
 import time
 import RPi.GPIO as GPIO
-import pyttsx
+#import pyttsx
 
 def shutdown(channel):
     logfile = open('singing_plants.log', 'a')
     logfile.write(str(time.time()) + " shutting down\n")
     logfile.close()
-    engine = pyttsx.init()
-    engine.say('System Offline')
-    engine.runAndWait()
-    print 'shutting down'
+    os.system('flite -t "System Shutdown"')
+
     os.system('sudo shutdown -h now')
 
 def setup():
