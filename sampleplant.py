@@ -57,10 +57,10 @@ pygame.mixer.pre_init(44100, -16, 12, 512)
 pygame.init()
 
 SOUND_MAPPING = {
-  3: ['/opt/sonic-pi/etc/samples/loop_amen.wav',0.7,True],
-  1: ['/opt/sonic-pi/etc/samples/ambi_drone.wav',1,True],
-  2: ['/opt/sonic-pi/etc/samples/bass_voxy_c.wav',0.5,True],
-  0: ['/opt/sonic-pi/etc/samples/ambi_piano.wav',1,False]
+  3: ['samples/loop_amen.wav',0.7,True],
+  1: ['samples/ambi_drone.wav',1,True],
+  2: ['samples/bass_voxy_c.wav',0.5,True],
+  0: ['samples/hello.ogg',1,True]
 }
 
 sounds = [0,0,0,0]
